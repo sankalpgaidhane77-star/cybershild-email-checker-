@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberShield — Login Monitor</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #38bdf8;
+  }
+  .logo span { color: #f472b6; }
+  .subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  /* ── Summary cards ── */
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #1e2333;
+    border: 1px solid #2d3448;
+    border-radius: 8px;
+    padding: 14px 20px;
+    min-width: 140px;
+    flex: 1;
+  }
+  .card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+  .card .value {
+    font-size: 26px;
+    font-weight: 700;
+  }
+  .card.total   .value { color: #38bdf8; }
+  .card.success .value { color: #4ade80; }
+  .card.failed  .value { color: #f87171; }
+  .card.suspect .value { color: #fb923c; }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .btn:hover { background: #2563eb; }
+  .btn.secondary {
+    background: #1e2333;
+    border: 1px solid #2d3448;
+    color: #94a3b8;
+  }
+  .btn.secondary:hover { background: #2d3448; color: #e2e8f0; }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+    background: #1e2333;
+    border: 1px solid #2d3448;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #e2e8f0;
+    font-size: 13px;
+    outline: none;
+  }
+  .search-box:focus { border-color: #3b82f6; }
+  .search-box::placeholder { color: #4b5563; }
+
+  /* ── Alert banner ── */
+  .alert {
+    background: #2d1f0e;
+    border: 1px solid #92400e;
+    border-left: 4px solid #fb923c;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #fdba74;
+  }
+  .alert strong { color: #fb923c; }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: #1e2333;
+    border: 1px solid #2d3448;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead tr {
+    background: #161b2e;
+  }
+  th {
+    text-align: left;
+    padding: 11px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    border-bottom: 1px solid #2d3448;
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #1a2032;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #232b3e; }
+
+  /* row flags */
+  tbody tr.row-failed   { background: #1f1515; }
+  tbody tr.row-failed:hover { background: #2a1a1a; }
+  tbody tr.row-suspect  { background: #1f1a0e; }
+  tbody tr.row-suspect:hover { background: #2a2210; }
+
+  /* badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .badge-success { background: #14532d; color: #4ade80; }
+  .badge-failed  { background: #450a0a; color: #f87171; }
+  .badge-ip      { background: #431407; color: #fb923c; font-size: 10px; margin-left: 4px; }
+
+  /* row number */
+  .row-num { color: #374151; font-size: 11px; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 11px;
+    color: #374151;
+    border-top: 1px solid #1e2333;
+    padding-top: 16px;
+  }
+
+  /* ── Security Alerts section ── */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 32px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #fb923c;
+    display: inline-block;
+  }
+  .disclaimer-box {
+    background: #161b2e;
+    border: 1px solid #2d3448;
+    border-left: 4px solid #38bdf8;
+    border-radius: 6px;
+    padding: 11px 16px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+  .alert-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .alert-card {
+    border-radius: 8px;
+    border: 1px solid #2d3448;
+    overflow: hidden;
+  }
+  .alert-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .alert-card-header .ip-label {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: monospace;
+    letter-spacing: .03em;
+  }
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .risk-high   { background: #450a0a; color: #ef4444; border: 1px solid #7f1d1d; }
+  .risk-medium { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
+  .risk-low    { background: #422006; color: #facc15; border: 1px solid #713f12; }
+  .alert-card-body {
+    padding: 12px 16px 14px;
+    border-top: 1px solid #2d3448;
+    background: #12161f;
+  }
+  .alert-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 10px;
+  }
+  .alert-meta-item .meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: 3px;
+  }
+  .alert-meta-item .meta-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+  .alert-reason {
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.6;
+    border-top: 1px solid #1e2333;
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+  .no-alerts {
+    text-align: center;
+    padding: 24px;
+    color: #4ade80;
+    font-size: 13px;
+    background: #0d1f13;
+    border: 1px solid #166534;
+    border-radius: 8px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    td, th { padding: 8px 10px; }
+    .logo { font-size: 22px; }
+    .alert-meta { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Cyber<span>Shield</span></div>
+    <div class="subtitle">Login Activity Monitor &nbsp;|&nbsp; Generated 2026-10-21 10:15:20 &nbsp;|&nbsp; Suspicious threshold: 5+ failed attempts</div>
+  </div>
+</div>
+
+<!-- Summary cards -->
+<div class="cards">
+  <div class="card total">
+    <div class="label">Total Records</div>
+    <div class="value">20</div>
+  </div>
+  <div class="card success">
+    <div class="label">Successful</div>
+    <div class="value">11</div>
+  </div>
+  <div class="card failed">
+    <div class="label">Failed</div>
+    <div class="value">9</div>
+  </div>
+  <div class="card suspect">
+    <div class="label">Flagged IPs (&ge;5 fails)</div>
+    <div class="value">1</div>
+  </div>
+</div>
+
+<!-- Alert banner (shown only when suspicious IPs found) -->
+<!-- The display property is set by Python to "block" or "none" depending
+     on whether the rule fired.  No ML, no server calls — just an if. -->
+<div class="alert" id="alertBanner" style="display:block">
+  <strong>&#9888; Suspicious Activity Detected</strong><br><br>
+  <strong>Rule triggered:</strong> An IP address is flagged when it has <strong>5 or more failed logins</strong>. The following IP(s) exceeded this limit:<br><ul style='margin:8px 0 0 16px'><li style='margin:6px 0'>IP 198.51.100.42 was flagged because it had 6 failed login attempts, which meets or exceeds the suspicious threshold of 5. Usernames tried: admin, root, alice.morgan. Time range: 2024-06-10 10:30:00 to 2024-06-10 10:31:18. This pattern suggests an automated brute-force attack.</li></ul>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn" onclick="generateNew()">&#8635; &nbsp;Generate Sample Data</button>
+  <a class="btn secondary" href="javascript:void(0)" onclick="exportCSV()">&#8595; &nbsp;Export CSV</a>
+  <input class="search-box" type="text" id="searchBox" placeholder="Search username, IP or result..." oninput="filterTable()">
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table id="loginTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Time</th>
+        <th>Username</th>
+        <th>IP Address</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class=""><td class="row-num">1</td><td>2024-06-10 08:02:11</td><td>alice.morgan</td><td>192.168.1.12</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">2</td><td>2024-06-10 08:15:44</td><td>bob.carter</td><td>10.0.0.55</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">3</td><td>2024-06-10 08:31:07</td><td>carol.white</td><td>172.16.5.23</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">4</td><td>2024-06-10 09:04:52</td><td>david.hall</td><td>192.168.1.88</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">5</td><td>2024-06-10 09:20:33</td><td>emma.brooks</td><td>10.0.0.101</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class="row-failed"><td class="row-num">6</td><td>2024-06-10 09:45:01</td><td>frank.stone</td><td>203.0.113.7</td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-failed"><td class="row-num">7</td><td>2024-06-10 10:02:18</td><td>grace.hill</td><td>192.168.2.14</td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">8</td><td>2024-06-10 10:30:00</td><td>admin</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">9</td><td>2024-06-10 10:30:14</td><td>admin</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">10</td><td>2024-06-10 10:30:29</td><td>admin</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">11</td><td>2024-06-10 10:30:47</td><td>root</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">12</td><td>2024-06-10 10:31:02</td><td>root</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class="row-suspect"><td class="row-num">13</td><td>2024-06-10 10:31:18</td><td>alice.morgan</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class=""><td class="row-num">14</td><td>2024-06-10 10:31:35</td><td>alice.morgan</td><td>198.51.100.42 <span class="badge badge-ip">SUSPECT</span></td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">15</td><td>2024-06-10 11:05:44</td><td>henry.price</td><td>10.0.0.77</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">16</td><td>2024-06-10 11:22:09</td><td>iris.james</td><td>172.16.5.99</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class="row-failed"><td class="row-num">17</td><td>2024-06-10 11:48:53</td><td>jack.norris</td><td>192.168.1.33</td><td><span class="badge badge-failed">Failed</span></td></tr>
+      <tr class=""><td class="row-num">18</td><td>2024-06-10 12:03:21</td><td>karen.fox</td><td>10.0.0.200</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">19</td><td>2024-06-10 12:17:44</td><td>leo.grant</td><td>192.168.2.61</td><td><span class="badge badge-success">Success</span></td></tr>
+      <tr class=""><td class="row-num">20</td><td>2024-06-10 12:45:00</td><td>mia.chen</td><td>172.16.5.8</td><td><span class="badge badge-success">Success</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Security Alerts Section ─────────────────────────────────────────── -->
+<div class="section-title">
+  <span class="dot"></span> Security Alerts
+</div>
+
+<!-- Disclaimer — always visible so the reader doesn't over-react -->
+<div class="disclaimer-box">
+  <strong>Important:</strong> A suspicious login pattern does <strong>not</strong>
+  automatically prove a cyberattack. It is a signal that warrants human
+  investigation. The account holder may have forgotten their password, or a
+  shared IP address (such as a corporate NAT gateway or VPN) could be
+  responsible for multiple attempts. Always verify before taking action.
+</div>
+
+<!-- Alert cards injected by Python -->
+<div class="alert-cards" id="alertCards">
+
+  <div class="alert-card">
+    <div class="alert-card-header" style="background:#431407">
+      <span class="ip-label" style="color:#fb923c">198.51.100.42</span>
+      <span class="risk-badge risk-medium">MEDIUM RISK</span>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-meta">
+        <div class="alert-meta-item">
+          <div class="meta-label">Primary Username</div>
+          <div class="meta-value"><code>admin</code></div>
+        </div>
+        <div class="alert-meta-item">
+          <div class="meta-label">Failed Attempts</div>
+          <div class="meta-value" style="color:#fb923c">6</div>
+        </div>
+        <div class="alert-meta-item">
+          <div class="meta-label">First Seen</div>
+          <div class="meta-value">2024-06-10 10:30:00</div>
+        </div>
+        <div class="alert-meta-item">
+          <div class="meta-label">Last Seen</div>
+          <div class="meta-value">2024-06-10 10:31:18</div>
+        </div>
+        <div class="alert-meta-item">
+          <div class="meta-label">All Usernames Tried</div>
+          <div class="meta-value"><code style='font-size:12px'>admin</code>, <code style='font-size:12px'>root</code>, <code style='font-size:12px'>alice.morgan</code></div>
+        </div>
+      </div>
+      <div class="alert-reason">
+        <strong style="color:#fb923c">Why flagged:</strong>
+        This IP made 6 failed login attempts, meeting the suspicious threshold of 5. Could be a forgotten password or an early-stage attack — further investigation is recommended.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Made with IBM Bob &nbsp;&bull;&nbsp; CyberShield Email Fraud Analyzer</div>
+
+<script>
+  /* ── Embedded record data (JSON) ── */
+  const RECORDS = [{"time": "2024-06-10 08:02:11", "username": "alice.morgan", "ip": "192.168.1.12", "result": "Success"}, {"time": "2024-06-10 08:15:44", "username": "bob.carter", "ip": "10.0.0.55", "result": "Success"}, {"time": "2024-06-10 08:31:07", "username": "carol.white", "ip": "172.16.5.23", "result": "Success"}, {"time": "2024-06-10 09:04:52", "username": "david.hall", "ip": "192.168.1.88", "result": "Success"}, {"time": "2024-06-10 09:20:33", "username": "emma.brooks", "ip": "10.0.0.101", "result": "Success"}, {"time": "2024-06-10 09:45:01", "username": "frank.stone", "ip": "203.0.113.7", "result": "Failed"}, {"time": "2024-06-10 10:02:18", "username": "grace.hill", "ip": "192.168.2.14", "result": "Failed"}, {"time": "2024-06-10 10:30:00", "username": "admin", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:30:14", "username": "admin", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:30:29", "username": "admin", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:30:47", "username": "root", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:31:02", "username": "root", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:31:18", "username": "alice.morgan", "ip": "198.51.100.42", "result": "Failed"}, {"time": "2024-06-10 10:31:35", "username": "alice.morgan", "ip": "198.51.100.42", "result": "Success"}, {"time": "2024-06-10 11:05:44", "username": "henry.price", "ip": "10.0.0.77", "result": "Success"}, {"time": "2024-06-10 11:22:09", "username": "iris.james", "ip": "172.16.5.99", "result": "Success"}, {"time": "2024-06-10 11:48:53", "username": "jack.norris", "ip": "192.168.1.33", "result": "Failed"}, {"time": "2024-06-10 12:03:21", "username": "karen.fox", "ip": "10.0.0.200", "result": "Success"}, {"time": "2024-06-10 12:17:44", "username": "leo.grant", "ip": "192.168.2.61", "result": "Success"}, {"time": "2024-06-10 12:45:00", "username": "mia.chen", "ip": "172.16.5.8", "result": "Success"}];
+  const SUSPECT_IPS = ["198.51.100.42"];
+
+  /* ── Generate new random data: reload with a fresh seed ── */
+  function generateNew() {
+    const seed = Math.floor(Math.random() * 999999);
+    window.location.href = window.location.pathname + '?seed=' + seed;
+  }
+
+  /* ── Filter table rows on search input ── */
+  function filterTable() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const rows = document.querySelectorAll('#loginTable tbody tr');
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  /* ── CSV export ── */
+  function exportCSV() {
+    const header = ['#','Time','Username','IP Address','Result'];
+    const lines = [header.join(',')];
+    RECORDS.forEach((r, i) => {
+      lines.push([i+1, r.time, r.username, r.ip, r.result].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cybershield_logins.csv';
+    a.click();
+  }
+
+  /* ── Handle seed in URL (for Generate Sample Data demo) ── */
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('seed')) {
+      // The page was already generated with the static data;
+      // show a toast to indicate "new data loaded"
+      const toast = document.createElement('div');
+      toast.textContent = 'Sample data refreshed (seed: ' + params.get('seed') + ')';
+      toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#3b82f6;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:9999;';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  })();
+</script>
+</body>
+</html>

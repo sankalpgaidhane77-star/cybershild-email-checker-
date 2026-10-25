@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-10-21T09:54:40.976926",
+  "score": 10,
+  "risk_level": "LOW RISK",
+  "is_fraud": false,
+  "summary": "Detected 2 fraud indicator(s) across: Sender, Body. Top signals: SENSITIVE_REQUEST, REPLY_TO_DIFF.",
+  "findings": [
+    {
+      "category": "Sender",
+      "description": "Reply-To address is different from sender",
+      "indicator": "REPLY_TO_DIFF",
+      "weight": 8
+    },
+    {
+      "category": "Body",
+      "description": "Email requests passwords, card numbers, or PINs",
+      "indicator": "SENSITIVE_REQUEST",
+      "weight": 20
+    }
+  ],
+  "email_meta": {
+    "sender": "Amazon Orders <orders@amazon.com>",
+    "reply_to": "orders@amazon.com",
+    "subject": "Your Amazon order #112-3456789 has shipped",
+    "url_count": 1,
+    "urls": [
+      "https://www.amazon.com/track/112-3456789"
+    ],
+    "attachments": []
+  }
+}

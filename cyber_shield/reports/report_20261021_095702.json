@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-10-21T09:57:02.251463",
+  "score": 0,
+  "risk_level": "SAFE",
+  "is_fraud": false,
+  "summary": "No fraud indicators detected. This email appears to be safe.",
+  "findings": [],
+  "email_meta": {
+    "sender": "Amazon Orders <orders@amazon.com>",
+    "reply_to": "orders@amazon.com",
+    "subject": "Your Amazon order #112-3456789 has shipped",
+    "url_count": 1,
+    "urls": [
+      "https://www.amazon.com/track/112-3456789"
+    ],
+    "attachments": []
+  }
+}

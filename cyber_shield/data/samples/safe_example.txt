@@ -1,0 +1,20 @@
+From: "Amazon Orders" <orders@amazon.com>
+Reply-To: orders@amazon.com
+To: customer@example.com
+Subject: Your Amazon order #112-3456789 has shipped
+Message-ID: <order.112345@amazon.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Hello,
+
+Your order has been shipped and is on its way!
+
+Order #112-3456789
+Estimated delivery: 2 business days
+
+You can track your package at: https://www.amazon.com/track/112-3456789
+
+Thank you for shopping with us.
+
+Amazon Customer Service
